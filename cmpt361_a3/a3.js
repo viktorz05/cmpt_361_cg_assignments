@@ -13,10 +13,29 @@ Rasterizer.prototype.drawLine = function(v1, v2) {
   // TODO/HINT: use this.setPixel(x, y, color) in this function to draw line
   let dx = x2 - x1;
   let dy = y2 - y1;
-  let m = dy / dx;
-  this.setPixel(Math.floor(x1), Math.floor(y1), [r1, g1, b1]);
-  this.setPixel(Math.floor(x2), Math.floor(y2), [r2, g2, b2])
-  
+
+  let color1 = [r1, g1, b1];
+  let color2 = [r2, g2, b2];
+  let step;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    step = Math.abs(dx);
+  }
+  else {
+    step = Math.abs(dy);
+  }
+  dx /= step;
+  dy /= step;
+
+  let x = x1
+  let y = y1
+  for (let i = 0; i <= step; ++i) {
+    let frac = i / step;
+    let colormix = color_interp(color1, color2, frac)
+    this.setPixel(Math.floor(x), Math.floor(y), colormix);
+    x += dx;
+    y += dy;
+  }
+
 }
 
 // take 3 vertices defining a solid triangle and rasterize to framebuffer
@@ -51,6 +70,19 @@ const DEF_INPUT = [
   "l,7,4;"
 ].join("\n");
 
+function color_interp(color1,color2,frac) {
+  const [r1,g1,b1] = color1;
+  const [r2,g2,b2] = color2;
+  let r = (r2 - r1) * frac + r1;
+  let g = (g2 - g1) * frac + g1;
+  let b = (b2 - b1) * frac + b1;
+  return [r,g,b]
+}
 
+function pointIsInsideTriangle(v1,v2,v3,p) {
+
+}
 // DO NOT CHANGE ANYTHING BELOW HERE
 export { Rasterizer, Framebuffer, DEF_INPUT };
+
+
