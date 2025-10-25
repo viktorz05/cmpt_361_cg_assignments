@@ -43,10 +43,24 @@ Rasterizer.prototype.drawTriangle = function(v1, v2, v3) {
   const [x1, y1, [r1, g1, b1]] = v1;
   const [x2, y2, [r2, g2, b2]] = v2;
   const [x3, y3, [r3, g3, b3]] = v3;
+
+  xmin = Math.ceil(Math.min(x1,x2,x3));
+  xmax = Math.ceil(Math.max(x1,x2,x3));
+  ymin = Math.ceil(Math.min(y1,y2,y3));
+  ymax = Math.ceil(Math.max(y1,y2,y3));
+
+  for (let x = xmin; x <= xmax; x++) {
+    for (let y = ymin; y <= ymax; y++) {
+      let p = [x,y];
+      if (pointIsInsideTriangle(v1, v2, v3, p)) {
+        this.setPixel(Math.floor(x), Math.floor(y), [r1, g1, b1]);
+      }
+    }
+  }
   // TODO/HINT: use this.setPixel(x, y, color) in this function to draw triangle
-  this.setPixel(Math.floor(x1), Math.floor(y1), [r1, g1, b1]);
-  this.setPixel(Math.floor(x2), Math.floor(y2), [r2, g2, b2]);
-  this.setPixel(Math.floor(x3), Math.floor(y3), [r3, g3, b3]);
+  // this.setPixel(Math.floor(x1), Math.floor(y1), [r1, g1, b1]);
+  // this.setPixel(Math.floor(x2), Math.floor(y2), [r2, g2, b2]);
+  // this.setPixel(Math.floor(x3), Math.floor(y3), [r3, g3, b3]);
 }
 
 
@@ -79,9 +93,72 @@ function color_interp(color1,color2,frac) {
   return [r,g,b]
 }
 
-function pointIsInsideTriangle(v1,v2,v3,p) {
-
+function pointIsInsideTriangle(v1,v2,v3,p){
+  let isInside_v1v2 = false;
+  let isInside_v2v3 = false;
+  let isInside_v1v3 = false;
+  const [x1,y1] = v1;
+  const [x2,y2] = v2;
+  const [x3,y3] = v3;
+  const [px,py] = p;
+// line between v1 and v2
+  let a = y2 - y1;
+  let b = x2 - x1;
+  let c = x2*y1 - x1*y2;
+  let nx = a;
+  let ny = b;
+  if (px*a + py*b + c > 0) {
+    isInside_v1v2 = true;
+  } // top-left rule
+  else if (px*a + py*b + c == 0) {
+    if (isTopLeft(v1,v2)) {
+      isInside_v1v2 = true;
+    }
+  }
+  // line between v2 and v3
+  a = y3 - y2;
+  b = x3 - x2;
+  c = x3*y2 - x2*y3;
+  nx = a;
+  ny = b;
+  if (px*a + py*b + c > 0) {
+    isInside_v2v3 = true;
+  } // top-left rule
+  else if (px*a + py*b + c == 0) {
+    if (isTopLeft(v2,v3)) {
+      isInside_v2v3 = true;
+    }
+  }
+  // line between v1 and v3
+  a = y3 - y1;
+  b = x3 - x1;
+  c = x3*y1 - x1*y3;
+  nx = a;
+  ny = b;
+  if (px*a + py*b + c > 0) {
+    isInside_v1v3 = true;
+  } // top-left rule
+  else if (px*a + py*b + c == 0) {
+    if (isTopLeft(v1,v3)) {
+      isInside_v1v3 = true;
+    }
+  }
+  return isInside_v1v2 && isInside_v2v3 && isInside_v1v3;
 }
+
+function isTopLeft (v0,v1) {
+  let [x1, y1] = v0;
+  let [x2, y2] = v1;
+  let x = 0;
+  let y = 1;
+  let edge = [x2 - x1, y2 - y1];
+
+  let is_top_edge = edge[y] == 0 && edge[x] > 0; 
+  let is_left_edge = edge[y] > 0;
+
+  return is_left_edge || is_top_edge;
+}
+
 // DO NOT CHANGE ANYTHING BELOW HERE
 export { Rasterizer, Framebuffer, DEF_INPUT };
 
