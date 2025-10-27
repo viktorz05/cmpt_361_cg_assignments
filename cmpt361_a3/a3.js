@@ -74,7 +74,7 @@ const DEF_INPUT = [
   "v,52,52,0.0,1.0,0.0;",
   "v,52,10,0.0,0.0,1.0;",
   "v,10,52,1.0,1.0,1.0;",
-
+  "t,0,1,2;",
   "t,0,3,1;",
   "v,10,10,1.0,1.0,1.0;",
   "v,10,52,0.0,0.0,0.0;",
@@ -102,28 +102,15 @@ function barycentricCoordinates(v1, v2, v3, p) {
   const [x3, y3, [r3,g3,b3]] = v3;
   const [px, py] = p;
   // calculate the smaller areas defined by vertices and p
-
-  //const edge = (x0, y0, x1, y1, px, py) => (px - x0) * (y1 - y0) - (py - y0) * (x1 - x0);
-  
-  // const a1 = tripleProduct(x1,y1,x2,y2,px,py); a1 is the root problem but idk why??
-  const a2 = tripleProduct(x2,y2,x3,y3,px,py);
-  const a3 = tripleProduct(x3,y3,x1,y1,px,py);
-
-  // const A = a1 + a2 + a3;
-
-  // const A = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
-  // //barycentric coordinates
-  // const u = a1 / A;
-  // const v = a2 / A;
-  // const w = 1 - u - v;
-  const area = tripleProduct(x1, y1, x2, y2, x3, y3);
-  // if (area === 0) return null; // degenerate
-
-  // //barycentric weights (using edge functions)
-  const u = a2 / area; // weight for v1
-  const v = a3 / area; // weight for v2
+  // const a0 = tripleProduct(x1,y1,x2,y2,px,py); a0 is the root problem but idk why??
+  const a1 = tripleProduct(x2,y2,x3,y3,px,py);
+  const a2 = tripleProduct(x3,y3,x1,y1,px,py);
+  // calculate big area
+  const A = tripleProduct(x1, y1, x2, y2, x3, y3);
+  // barycentric coordinates (u + v + w = 1) 
+  const u = a1 / A; 
+  const v = a2 / A; 
   const w = 1.0 - u - v;   
-  
   // get the color at p
   const r = u * r1 + v * r2 + w * r3;
   const g = u * g1 + v * g2 + w * g3;
@@ -137,7 +124,7 @@ function pointIsInsideTriangle(v1,v2,v3,p){
   const [x2,y2] = v2;
   const [x3,y3] = v3;
   const [px,py] = p;
-// line between v1 and v2
+  
   const w1 = tripleProduct(x1, y1, x2, y2, px, py);
   const w2 = tripleProduct(x2, y2, x3, y3, px, py);
   const w3 = tripleProduct(x3, y3, x1, y1, px, py);
