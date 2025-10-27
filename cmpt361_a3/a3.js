@@ -70,10 +70,20 @@ Rasterizer.prototype.drawTriangle = function(v1, v2, v3) {
 // EXTRA CREDIT: change DEF_INPUT to create something interesting!
 ////////////////////////////////////////////////////////////////////////////////
 const DEF_INPUT = [
-  "v,32,0,1.0,0.0,0.0;",
-  "v,0,48,0.0,1.0,0.0;",
-  "v,64,48,0.0,0.0,1.0;",
-  "t,0,1,2"
+  "v,10,10,1.0,0.0,0.0;",
+  "v,52,52,0.0,1.0,0.0;",
+  "v,52,10,0.0,0.0,1.0;",
+  "v,10,52,1.0,1.0,1.0;",
+  "t,0,1,2;",
+  "t,0,3,1;",
+  "v,10,10,1.0,1.0,1.0;",
+  "v,10,52,0.0,0.0,0.0;",
+  "v,52,52,1.0,1.0,1.0;",
+  "v,52,10,0.0,0.0,0.0;",
+  "l,4,5;",
+  "l,5,6;",
+  "l,6,7;",
+  "l,7,4;"
 ].join("\n");
 
 function color_interp(color1,color2,frac) {
@@ -91,20 +101,29 @@ function barycentricCoordinates(v1, v2, v3, p) {
   const [x2, y2, [r2,g2,b2]] = v2;
   const [x3, y3, [r3,g3,b3]] = v3;
   const [px, py] = p;
-  // Calculate the smaller areas defined by vertices and p
-  const a1 = tripleProduct(x1, y1, x2, y2, px, py);
-  const a2 = tripleProduct(x2, y2, x3, y3, px, py);
-  const a3 = tripleProduct(x3, y3, x1, y1, px, py);
-  // Construct big area
-  const A = a1 + a2 + a3;
-  if (A === 0) {
-    return null;
-  }
-  // Barycentric coordinates
+  // calculate the smaller areas defined by vertices and p
+
+  //const edge = (x0, y0, x1, y1, px, py) => (px - x0) * (y1 - y0) - (py - y0) * (x1 - x0);
+  
+  const a1 = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1);
+  const a2 = (x3 - x2) * (py - y2) - (y3 - y2) * (px - x2);
+  const a3 = (x1 - x3) * (py - y3) - (y1 - y3) * (px - x3);
+
+
+  const A = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
+  //barycentric coordinates
   const u = a1 / A;
   const v = a2 / A;
   const w = 1 - u - v;
-  // Get the color at p
+  // const area = edge(x1, y1, x2, y2, x3, y3);
+  // if (area === 0) return null; // degenerate
+
+  // barycentric weights (using edge functions)
+  // const u = edge(x2, y2, x3, y3, px, py) / area; // weight for v1
+  // const v = edge(x3, y3, x1, y1, px, py) / area; // weight for v2
+  // const w = 1.0 - u - v;   
+  
+  // get the color at p
   const r = u * r1 + v * r2 + w * r3;
   const g = u * g1 + v * g2 + w * g3;
   const b = u * b1 + v * b2 + w * b3;
@@ -117,31 +136,49 @@ function pointIsInsideTriangle(v1,v2,v3,p){
   const [x2,y2] = v2;
   const [x3,y3] = v3;
   const [px,py] = p;
-  // Half-plane test
-  const w1 = tripleProduct(x1, y1, x2, y2, px, py);
-  const w2 = tripleProduct(x2, y2, x3, y3, px, py);
-  const w3 = tripleProduct(x3, y3, x1, y1, px, py);
-
-  const area = tripleProduct(x1, y1, x2, y2, x3, y3);
-
-  const topLeft1 = isTopLeft(v1, v2);
-  const topLeft2 = isTopLeft(v2, v3);
-  const topLeft3 = isTopLeft(v3, v1);
-
-  if (area > 0) { // CCW -> inside = left (w > 0), boundary included for top-left edges
-    return (w1 > 0 || (w1 === 0 && topLeft1)) &&
-           (w2 > 0 || (w2 === 0 && topLeft2)) &&
-           (w3 > 0 || (w3 === 0 && topLeft3));
-  } else {        // CW -> signs flip
-    return (w1 < 0 || (w1 === 0 && topLeft1)) &&
-           (w2 < 0 || (w2 === 0 && topLeft2)) &&
-           (w3 < 0 || (w3 === 0 && topLeft3));
+// line between v1 and v2
+  let a = y2 - y1;
+  let b = x2 - x1;
+  let c = x2*y1 - x1*y2;
+  if (px*a + py*b + c >= 0) {
+    isInside_v1v2 = true;
+  } // top-left rule
+  else if (px*a + py*b + c === 0) {
+    if (isTopLeft(v1,v2)) {
+      isInside_v1v2 = true;
+    }
   }
+  // line between v2 and v3
+  a = y3 - y2;
+  b = x3 - x2;
+  c = x3*y2 - x2*y3;
+  if (px*a + py*b + c >= 0) {
+    isInside_v2v3 = true;
+  } // top-left rule
+  else if (px*a + py*b + c === 0) {
+    if (isTopLeft(v2,v3)) {
+      isInside_v2v3 = true;
+    }
+  }
+  // line between v1 and v3
+  a = y1 - y3;
+  b = x3 - x1;
+  c = x3*y1 - x1*y3;
+  if (px*a + py*b + c >= 0) {
+    isInside_v1v3 = true;
+  } // top-left rule
+  else if (px*a + py*b + c === 0) {
+    if (isTopLeft(v3,v1)) {
+      isInside_v1v3 = true;
+    }
+  }
+  return isInside_v1v2 && isInside_v2v3 && isInside_v1v3;
 }
 
-function isTopLeft (v1,v2) {
-  const [x1, y1] = v1;
-  const [x2, y2] = v2;
+
+function isTopLeft (v0,v1) {
+  const [x1, y1] = v0;
+  const [x2, y2] = v1;
   let x = 0;
   let y = 1;
   const edge = [x2 - x1, y2 - y1];
@@ -152,7 +189,7 @@ function isTopLeft (v1,v2) {
   return is_left_edge || is_top_edge;
 }
 
-const tripleProduct = (x1, y1, x2, y2, px, py) => (px - x1)*(y2 - y1) - (py - y1)*(x2 - x1);
+const edge = (x0, y0, x1, y1, px, py) => (px - x0)*(y1 - y0) - (py - y0)*(x1 - x0);
 
 // DO NOT CHANGE ANYTHING BELOW HERE
 export { Rasterizer, Framebuffer, DEF_INPUT};
